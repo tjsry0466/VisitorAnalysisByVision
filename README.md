@@ -18,3 +18,8 @@ pre-trained model을 활용하여 방문자 추적에 필요한 몇가지 기술
 ## 추후 개발 내역
 - 방문자 카운팅을 위한 object tracking의 id별 출입 확인
 - 성별, 나이, 동일인물 확인 작업
+
+## 참고자료
+[Yolov5_DeepSort_Pytorch github](https://github.com/mikel-brostrom/Yolov5_DeepSort_Pytorch)
+
+[Face-Mask-Detection github](https://github.com/chandrikadeb7/Face-Mask-Detection)

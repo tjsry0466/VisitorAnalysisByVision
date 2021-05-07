@@ -5,7 +5,7 @@ from tensorflow.keras.preprocessing.image import img_to_array
 
 
 def detect_and_predict_mask(frame, faceNet, maskNet):
-    ref_confidence = 0.5 
+    ref_confidence = 0.5
 
     (h, w) = frame.shape[:2]
     blob = cv2.dnn.blobFromImage(frame, 1.0, (300, 300),

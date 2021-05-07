@@ -1,4 +1,6 @@
 import datetime
+from yolov5.utils.general import scale_coords
+
 
 def compute_color_for_labels(label):
     palette = (2 ** 11 - 1, 2 ** 15 - 1, 2 ** 20 - 1)
@@ -20,3 +22,15 @@ def bbox_rel(*xyxy):
     w = bbox_w
     h = bbox_h
     return x_c, y_c, w, h #박스 영역(사람의 그어지는거)
+
+def convert_tensor_xywh(img, im0, det):
+    det[:, :4] = scale_coords(img.shape[2:], det[:, :4], im0.shape).round()
+    bbox_xywh = []
+    confs = []
+    # Adapt detections to deep sort input format
+    for *xyxy, conf, cls in det:
+        x_c, y_c, bbox_w, bbox_h = bbox_rel(*xyxy)
+        obj = [x_c, y_c, bbox_w, bbox_h]
+        bbox_xywh.append(obj)
+        confs.append([conf.item()])
+    return (bbox_xywh, confs)

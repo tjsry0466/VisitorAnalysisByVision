@@ -16,6 +16,8 @@ from settings import load_face_model, load_mask_model
 from draws import draw_boxes, draw_face_and_mask_area
 from detactions import detect_and_predict_mask
 from dpsort import deepsort_input
+from processing import classify_face
+from etc import convert_tensor_xywh
 
 
 def detect():
@@ -51,15 +53,18 @@ def detect():
         im0 = im0s[0].copy()
         (locs, preds) = detect_and_predict_mask(im0, faceNet, maskNet)
 
+        classify_face(img, im0, pred, (locs, preds))
+
         # iterate object detection result
         for i, det in enumerate(pred):
             # if it has not result
             if det is None or not len(det):
                 deepsort.increment_ages()
                 continue
-                
             # process deepsort input
-            outputs = deepsort_input(img, im0,  det, deepsort)
+            bbox_xywh, confs = convert_tensor_xywh(img, im0,  det)
+            outputs = deepsort_input(im0, bbox_xywh, confs, deepsort)
+            
             if len(outputs) < 1:
                 continue
             # draw object boxes

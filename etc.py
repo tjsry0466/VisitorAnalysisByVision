@@ -29,6 +29,7 @@ def convert_tensor_xywh(img, im0, det):
     confs = []
     # Adapt detections to deep sort input format
     for *xyxy, conf, cls in det:
+        # print(xyxy)
         x_c, y_c, bbox_w, bbox_h = bbox_rel(*xyxy)
         obj = [x_c, y_c, bbox_w, bbox_h]
         bbox_xywh.append(obj)

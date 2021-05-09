@@ -2,16 +2,11 @@ import cv2
 from etc import compute_color_for_labels
 
 
-def draw_boxes(img, outputs, offset=(0, 0)):
+def draw_boxes(img, outputs):
     bbox = outputs[:, :4]
     identities = outputs[:, -1]
     for i, box in enumerate(bbox):
         x1, y1, x2, y2 = [int(i) for i in box]
-        x1 += offset[0]
-        x2 += offset[0]
-        y1 += offset[1]
-        y2 += offset[1]
-        # box text and bar
         id = int(identities[i]) if identities is not None else 0
         color = compute_color_for_labels(id)
         label = '{}{:d} '.format("", id)

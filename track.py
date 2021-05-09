@@ -53,23 +53,20 @@ def detect():
         im0 = im0s[0].copy()
         (locs, preds) = detect_and_predict_mask(im0, faceNet, maskNet)
 
-        classify_face(img, im0, pred, (locs, preds))
-
         # iterate object detection result
-        for i, det in enumerate(pred):
-            # if it has not result
-            if det is None or not len(det):
-                deepsort.increment_ages()
-                continue
-            # process deepsort input
-            bbox_xywh, confs = convert_tensor_xywh(img, im0,  det)
-            outputs = deepsort_input(im0, bbox_xywh, confs, deepsort)
-            
-            if len(outputs) < 1:
-                continue
-            # draw object boxes
-            draw_boxes(im0, outputs)
+        obj_ = pred[0]
         
+        if len(obj_):
+            bbox_xywh, confs = convert_tensor_xywh(img, im0,  obj_)
+            outputs = deepsort_input(im0, bbox_xywh, confs, deepsort)
+            if len(outputs) > 0:
+                draw_boxes(im0, outputs)
+        else:
+            outputs = []
+            deepsort.increment_ages()
+        
+        classify_face(frame_idx, im0, outputs, (locs, preds))
+
         # draw face and mask detaction results
         for (box, pred) in zip(locs, preds):
             draw_face_and_mask_area(im0, box, pred)

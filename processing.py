@@ -1,15 +1,11 @@
 from etc import convert_tensor_xywh
+from yolov5.utils.general import scale_coords
 
-
-def classify_face(img, im0, obj_box, face_info):
-    face_pred, face_box = face_info
-    print('---------------process----------------')
+def classify_face(frame_idx, im0, obj_, face_):
+    face_box, face_pred = face_
+    print(f'---------------{frame_idx} process----------------')
     print('object:', end=' ')
-    for det in obj_box:
-        if det is None or not len(det):
-            continue
-        bbox_xywh, confs = convert_tensor_xywh(img, im0,  det)
-        print(bbox_xywh)
+    print(obj_)
     print('face:', end=' ')
     print(face_box)
     print(face_pred)

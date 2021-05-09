@@ -21,6 +21,7 @@ from etc import convert_tensor_xywh
 
 
 def detect():
+    fdb = {}
     cfg = get_config()
     cfg.merge_from_file("deep_sort_pytorch/configs/deep_sort.yaml")
     deepsort = DeepSort(cfg.DEEPSORT.REID_CKPT,
@@ -51,6 +52,7 @@ def detect():
 
         # face and mask detaction
         im0 = im0s[0].copy()
+        im0c = im0.copy()
         (locs, preds) = detect_and_predict_mask(im0, faceNet, maskNet)
 
         # iterate object detection result
@@ -65,7 +67,7 @@ def detect():
             outputs = []
             deepsort.increment_ages()
         
-        classify_face(frame_idx, im0, outputs, (locs, preds))
+        classify_face(frame_idx, im0, im0c, outputs, (locs, preds), fdb)
 
         # draw face and mask detaction results
         for (box, pred) in zip(locs, preds):

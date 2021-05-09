@@ -16,7 +16,7 @@ from settings import load_face_model, load_mask_model
 from draws import draw_boxes, draw_face_and_mask_area
 from detactions import detect_and_predict_mask
 from dpsort import deepsort_input
-from processing import classify_face
+from processing import classify_face, s3_face_upload
 from etc import convert_tensor_xywh
 
 
@@ -67,8 +67,8 @@ def detect():
             outputs = []
             deepsort.increment_ages()
         
-        classify_face(frame_idx, im0, im0c, outputs, (locs, preds), fdb)
-
+        fdb = classify_face(frame_idx, im0, im0c, outputs, (locs, preds), fdb)
+        fdb = s3_face_upload(frame_idx, fdb)
         # draw face and mask detaction results
         for (box, pred) in zip(locs, preds):
             draw_face_and_mask_area(im0, box, pred)

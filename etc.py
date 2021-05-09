@@ -1,4 +1,5 @@
 import datetime
+import uuid
 from yolov5.utils.general import scale_coords
 
 
@@ -11,6 +12,8 @@ def get_now():
     now = datetime.datetime.now()
     nowDatetime = now.strftime('%Y-%m-%d %H:%M:%S')
     return nowDatetime  # 2015-04-19 12:11:32\
+def get_uuid():
+    return uuid.uuid4()
 
 def bbox_rel(*xyxy):
     bbox_left = min([xyxy[0].item(), xyxy[2].item()])

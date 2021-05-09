@@ -53,6 +53,6 @@ def classify_face(frame_idx, im0, im0c, obj_, face_, fdb):
                 print(o_id, ':', o_start_x, o_start_y, o_end_x, o_end_y)    
                 print(f'face in object_id: {o_id}')
                 f_shape = fdb[o_id]['f_arr'].shape
-                # im0[0:f_shape[0],0:f_shape[1]] = fdb[o_id]['f_arr']
+                im0[0:f_shape[0],0:f_shape[1]] = fdb[o_id]['f_arr']
                     
             

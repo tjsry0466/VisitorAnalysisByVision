@@ -19,6 +19,40 @@ from dpsort import deepsort_input
 from processing import classify_face, s3_face_upload
 from etc import convert_tensor_xywh
 
+class models():
+    def __init__():
+        self.deepsort_config = "deep_sort_pytorch/configs/deep_sort.yaml"
+        self.yolov5_weight = "yolov5/weights/yolov5s.pt"
+        self.res10_caffe_model = "models/res10_300x300_ssd_iter_140000.caffemodel"
+        self.res10_caffe_config = "models/deploy.prototxt.txt"
+        self.mask_model = "models/mask_detector.model"
+
+    def get_deepsort_model():
+        self.cfg = get_config()
+        self.cgf.merge_from_file(self.deepsort_config)
+        self.deepsort = DeepSort(self.cfg.DEEPSORT.REID_CKPT,
+                        max_dist=self.cfg.DEEPSORT.MAX_DIST, min_confidence=self.cfg.DEEPSORT.MIN_CONFIDENCE,
+                        nms_max_overlap=self.cfg.DEEPSORT.NMS_MAX_OVERLAP, max_iou_distance=self.cfg.DEEPSORT.MAX_IOU_DISTANCE,
+                        max_age=self.cfg.DEEPSORT.MAX_AGE, n_init=self.cfg.DEEPSORT.N_INIT, nn_budget=self.cfg.DEEPSORT.NN_BUDGET,
+                        use_cuda=True)
+        return self.deepsort
+    
+    def get_yolov5_model():
+        self.device = select_device('')
+        self.model = torch.load(self.yolov5_weight, map_location=self.device)['model'].float()  # load to FP32
+        self.model.to(self.device).eval()
+        self.model.half()  # to FP16 # tensorflow 모델값 저장
+        cudnn.benchmark = True  # set True to speed up constant image size inference
+        return self.model
+
+    def load_face_model():
+        self.faceNet = cv2.dnn.readNetFromCaffe(self.res10_caffe_config, self.res10_caffe_model)
+        return self.faceNet
+
+    def load_mask_model():
+        self.maskNet = load_model(self.mask_model)
+        return self.maskNet
+        
 
 def detect():
     fdb = {}
@@ -68,7 +102,7 @@ def detect():
             deepsort.increment_ages()
         
         fdb = classify_face(frame_idx, im0, im0c, outputs, (locs, preds), fdb)
-        fdb = s3_face_upload(frame_idx, fdb)
+        # fdb = s3_face_upload(frame_idx, fdb)
         # draw face and mask detaction results
         for (box, pred) in zip(locs, preds):
             draw_face_and_mask_area(im0, box, pred)

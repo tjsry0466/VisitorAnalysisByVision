@@ -1,5 +1,6 @@
 import datetime
 import uuid
+import torch
 from yolov5.utils.general import scale_coords
 
 
@@ -38,3 +39,11 @@ def convert_tensor_xywh(img, im0, det):
         bbox_xywh.append(obj)
         confs.append([conf.item()])
     return (bbox_xywh, confs)
+
+def preprocess_yolo_input(img, device):
+    img = torch.from_numpy(img).to(device)
+    img = img.half() 
+    img /= 255.0  # 0 - 255 to 0.0 - 1.0
+    if img.ndimension() == 3:
+        img = img.unsqueeze(0)
+    return img

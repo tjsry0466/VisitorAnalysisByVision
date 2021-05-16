@@ -1,8 +1,10 @@
 import cv2
 import numpy as np
+import torch
 from yolov5.utils.general import non_max_suppression
 from tensorflow.keras.applications.mobilenet_v2 import preprocess_input
 from tensorflow.keras.preprocessing.image import img_to_array
+from etc import bbox_rel
 
 class Predictions():
     def __init__(self, yl_model):
@@ -49,3 +51,10 @@ class Predictions():
             preds = maskNet.predict(faces, batch_size=32)
 
         return (locs, preds)   
+
+    def deepsort_input(self, im0, bbox_xywh, confs, deepsort):
+        xywhs = torch.Tensor(bbox_xywh)
+        confss = torch.Tensor(confs)
+
+        outputs = deepsort.update(xywhs, confss, im0)
+        return outputs

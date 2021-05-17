@@ -8,11 +8,13 @@ from yolov5.utils.datasets import LoadStreams
 from config import Models
 from prediction import Predictions
 from draws import draw_boxes, draw_face_and_mask_area
-from processing import classify_face, s3_face_upload
-from etc import convert_tensor_xywh, preprocess_yolo_input
+from processing import classify_face_and_body, s3_face_upload, Process
+from etc import convert_tensor_xywh, preprocess_yolo_input, display_status
 
 def detect():
     fdb = {}
+    pdb = {}
+    process = Process()
 
     models = Models()
     deepsort = models.get_deepsort_model()
@@ -34,25 +36,31 @@ def detect():
         pred_obj = prediction.predict_object(img)
 
         # face and mask detaction
-        locs, preds = prediction.detect_and_predict_mask(im0, faceNet, maskNet)
+        pred_locs, pred_face = prediction.detect_and_predict_mask(im0, faceNet, maskNet)
+        
 
         # iterate object detection result
         if len(pred_obj):
             bbox_xywh, confs = convert_tensor_xywh(img, im0,  pred_obj)
             outputs = prediction.deepsort_input(im0, bbox_xywh, confs, deepsort)
         else:
-            outputs = []
             deepsort.increment_ages()
-        
-        fdb = classify_face(frame_idx, im0, im0c, outputs, (locs, preds), fdb)
+            outputs = []
+
+        process_result = process.next(frame_idx, outputs, pred_locs, pred_face)
+        # fdb = classify_face_and_body(frame_idx, im0, im0c, outputs, (locs, preds), fdb)
         # fdb = s3_face_upload(frame_idx, fdb)
 
+        
+
         # draw face and mask detaction results
-        for (box, pred) in zip(locs, preds):
+        for (box, pred) in zip(pred_locs, pred_face):
             draw_face_and_mask_area(im0, box, pred)
         
         if len(outputs) > 0:
             draw_boxes(im0, outputs)
+
+        display_status(pdb)
 
         # display image
         cv2.imshow('frame', im0)

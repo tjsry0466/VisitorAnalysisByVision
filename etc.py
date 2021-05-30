@@ -47,6 +47,3 @@ def preprocess_yolo_input(img, device):
     if img.ndimension() == 3:
         img = img.unsqueeze(0)
     return img
-
-def display_status(pdb):
-    pass

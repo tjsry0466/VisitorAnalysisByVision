@@ -8,12 +8,10 @@ from yolov5.utils.datasets import LoadStreams
 from config import Models
 from prediction import Predictions
 from draws import draw_boxes, draw_face_and_mask_area
-from processing import classify_face_and_body, s3_face_upload, Process
+from processing import s3_face_upload, Process
 from etc import convert_tensor_xywh, preprocess_yolo_input, display_status
 
 def detect():
-    fdb = {}
-    pdb = {}
     process = Process()
 
     models = Models()
@@ -37,7 +35,6 @@ def detect():
 
         # face and mask detaction
         pred_locs, pred_face = prediction.detect_and_predict_mask(im0, faceNet, maskNet)
-        
 
         # iterate object detection result
         if len(pred_obj):
@@ -47,11 +44,10 @@ def detect():
             deepsort.increment_ages()
             outputs = []
 
-        process_result = process.next(frame_idx, outputs, pred_locs, pred_face)
-        # fdb = classify_face_and_body(frame_idx, im0, im0c, outputs, (locs, preds), fdb)
-        # fdb = s3_face_upload(frame_idx, fdb)
-
-        
+        # process_result = process.next(frame_idx, outputs, pred_locs, pred_face)
+        process.classify_face_and_body(frame_idx, im0, im0c, outputs, (pred_locs, pred_face), fdb)
+        # process.s3_face_upload(frame_idx)
+        process.next()
 
         # draw face and mask detaction results
         for (box, pred) in zip(pred_locs, pred_face):
@@ -59,8 +55,6 @@ def detect():
         
         if len(outputs) > 0:
             draw_boxes(im0, outputs)
-
-        display_status(pdb)
 
         # display image
         cv2.imshow('frame', im0)

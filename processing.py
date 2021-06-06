@@ -27,6 +27,7 @@ class Process():
             f_start_x, f_start_y, f_end_x, f_end_y = face_box[i]
             mask, no_mask = face_pred[i]
             mask_label = True if mask > no_mask else False
+            # print(mask_label)
 
             # 얼굴 다 보이도록 15픽셀 만큼 늘려줌
             offset_result = self.get_offset_area(f_start_x, f_end_x, f_start_y, f_end_y, 15)
@@ -40,7 +41,7 @@ class Process():
                 o_w = o_end_x-o_start_x
                 o_h = o_end_y-o_start_y   
                 f_mean_x, f_mean_y = (f_start_x+f_end_x)/2, (f_start_y+f_end_y)/2
-
+                print(mask_label)
                 # 얼굴 위치 평균이 object안에 위치하는경우
                 if not o_start_x <= f_mean_x <= o_end_x and not o_start_y <= f_mean_y <= o_end_y:
                     continue
@@ -69,6 +70,7 @@ class Process():
                         }
                     else:
                         self.fdb[o_id]['detectedFrame'] = frame_idx
+                        self.fdb[o_id]['f_mask'] = mask_label
                 
                 # f_shape = self.fdb[o_id]['f_arr'].shape
                 # im0[0:f_shape[0],0:f_shape[1]] = self.fdb[o_id]['f_arr']
@@ -110,7 +112,9 @@ class Process():
         return len(self.fdb), len(lst)
 
     def next(self):
-        print(self.fdb.keys())
+        self.get_tracking_object_num()
+        mask_status = self.get_mask_detect_status()
+        print('mask', mask_status)
 
     def get_temp_and_handwashing():
         return 36.5, True
@@ -125,7 +129,16 @@ class Process():
                     max_size_object_id = key
                     size = o_w*o_h 
         self.tracking_object_num = max_size_object_id 
-        print('tracking:', self.tracking_object_num)       
+        print('tracking:', self.tracking_object_num)    
+
+    def get_mask_detect_status(self):
+        mask_status = -1
+        if self.tracking_object_num in self.fdb:
+            mask_status = self.fdb[self.tracking_object_num]['f_mask']
+        return mask_status
+        
+
+            
 
                     
                 

@@ -46,9 +46,9 @@ def detect():
 
         # process_result = process.next(frame_idx, outputs, pred_locs, pred_face)
         process.classify_face_and_body(frame_idx, im0, im0c, outputs, (pred_locs, pred_face))
-        process.get_tracking_object_num()
+        # process.get_tracking_object_num()
         # process.s3_face_upload(frame_idx)
-        # process.next()
+        process.next()
 
         # draw face and mask detaction results
         for (box, pred) in zip(pred_locs, pred_face):

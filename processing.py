@@ -52,6 +52,7 @@ class Process():
                         'f_arr': im0c[f_start_y:f_end_y,f_start_x:f_end_x],
                         'f_mask': mask_label,
                         'f_wh' : (f_w, f_h),
+                        'f_wh_now' : (f_w, f_h),
                         'updatedFrame': frame_idx, 
                         'detectedFrame': frame_idx
                     } 
@@ -65,12 +66,14 @@ class Process():
                             'f_arr': im0c[f_start_y:f_end_y,f_start_x:f_end_x],
                             'f_mask': mask_label,
                             'f_wh' : (f_w, f_h),
+                            'f_wh_now' : (f_w, f_h),
                             'updatedFrame': frame_idx, 
                             'detectedFrame': frame_idx
                         }
                     else:
                         self.fdb[o_id]['detectedFrame'] = frame_idx
                         self.fdb[o_id]['f_mask'] = mask_label
+                        self.fdb[o_id]['f_wh_now'] = (f_w, f_h)
                 
                 # f_shape = self.fdb[o_id]['f_arr'].shape
                 # im0[0:f_shape[0],0:f_shape[1]] = self.fdb[o_id]['f_arr']
@@ -114,7 +117,9 @@ class Process():
     def next(self):
         self.get_tracking_object_num()
         mask_status = self.get_mask_detect_status()
+        over_face_size = self.is_over_face_size()
         print('mask', mask_status)
+        print('isoverface', over_face_size)
 
     def get_temp_and_handwashing():
         return 36.5, True
@@ -136,6 +141,17 @@ class Process():
         if self.tracking_object_num in self.fdb:
             mask_status = self.fdb[self.tracking_object_num]['f_mask']
         return mask_status
+    
+    def is_over_face_size(self, face_size_condition = 55000):
+        result = -1
+        if self.tracking_object_num in self.fdb:
+            face_size = self.fdb[self.tracking_object_num]['f_wh_now']
+            f_w, f_h = face_size
+            face_size = f_w*f_h
+            print(face_size)
+            result = True if face_size > face_size_condition else False
+        return result
+                
         
 
             

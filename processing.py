@@ -120,8 +120,22 @@ class Process():
         over_face_size = self.is_over_face_size()
         print('mask', mask_status)
         print('isoverface', over_face_size)
+        
+        if not mask_status:
+            print('마스크를 착용하여 주시기 바랍니다.')
 
-    def get_temp_and_handwashing():
+        if over_face_size:
+            print('온도 측정을 시작합니다.')
+            temp, hand_wasing = self.get_temp_and_handwashing()
+
+            print(temp, hand_wasing)
+            if 35.5 <= temp <= 37.5:
+                print('정상 체온입니다.')
+                print('손세정제 사용후 입장해 주시기 바랍니다.')
+        else:
+            print('좀더 가까이 와주시기 바랍니다.')
+
+    def get_temp_and_handwashing(self):
         return 36.5, True
     
     def get_tracking_object_num(self):
@@ -147,8 +161,11 @@ class Process():
         if self.tracking_object_num in self.fdb:
             face_size = self.fdb[self.tracking_object_num]['f_wh_now']
             f_w, f_h = face_size
+            # 마스크 착용시 height가 줄어드는 문제가 있어 보정
+            if self.get_mask_detect_status:
+                f_h +=100
+                
             face_size = f_w*f_h
-            print(face_size)
             result = True if face_size > face_size_condition else False
         return result
                 

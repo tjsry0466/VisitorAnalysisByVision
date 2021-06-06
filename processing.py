@@ -122,18 +122,22 @@ class Process():
         print('isoverface', over_face_size)
         
         if not mask_status:
-            print('마스크를 착용하여 주시기 바랍니다.')
+            print('please mask check')
+            return
 
         if over_face_size:
-            print('온도 측정을 시작합니다.')
+            print('start temp')
             temp, hand_wasing = self.get_temp_and_handwashing()
 
             print(temp, hand_wasing)
             if 35.5 <= temp <= 37.5:
-                print('정상 체온입니다.')
-                print('손세정제 사용후 입장해 주시기 바랍니다.')
+                print('temp is ok')
+                print('please hand washing')
+                print('good bye')
+                return
         else:
-            print('좀더 가까이 와주시기 바랍니다.')
+            print('please come closely')
+            return 
 
     def get_temp_and_handwashing(self):
         return 36.5, True

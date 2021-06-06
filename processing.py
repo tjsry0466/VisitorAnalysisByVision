@@ -18,6 +18,7 @@ class Process():
         
 
     def classify_face_and_body(self, frame_idx, im0, im0c, obj_, face_):
+        self.frame_idx = frame_idx
         face_box, face_pred = face_
         print(f'---------------{frame_idx} process----------------')
         print(f'obj: {len(obj_)}, face: {len(face_box)}')
@@ -28,18 +29,16 @@ class Process():
             mask_label = True if mask > no_mask else False
 
             # 얼굴 다 보이도록 15픽셀 만큼 늘려줌
-            f_start_x-=15; f_end_x+=15; f_start_y-=15; f_end_y+=15
-            if f_start_x < 0: f_start_x = 0
-            if f_end_x > 640: f_end_x = 640
-            if f_start_y < 0: f_start_y = 0
-            if f_end_y > 640: f_end_y = 640
-
+            offset_result = self.get_offset_area(f_start_x, f_end_x, f_start_y, f_end_y, 15)
+            f_start_x, f_end_x, f_start_y, f_end_y = offset_result
             f_w = f_end_x-f_start_x
-            f_h = f_end_y-f_start_y\
+            f_h = f_end_y-f_start_y
 
             # print(f_start_x, f_start_y, f_end_x, f_end_y, mask_label)
             for j in obj_:
-                o_start_x, o_start_y, o_end_x, o_end_y, o_id = j    
+                o_start_x, o_start_y, o_end_x, o_end_y, o_id = j
+                o_w = o_end_x-o_start_x
+                o_h = o_end_y-o_start_y   
                 f_mean_x, f_mean_y = (f_start_x+f_end_x)/2, (f_start_y+f_end_y)/2
 
                 # 얼굴 위치 평균이 object안에 위치하는경우
@@ -47,6 +46,7 @@ class Process():
                     continue
                 if not o_id in self.fdb:
                     self.fdb[o_id] = {
+                        'o_wh': (o_w,o_h),
                         'f_xyxy': (f_start_x, f_start_y, f_end_x, f_end_y),
                         'f_arr': im0c[f_start_y:f_end_y,f_start_x:f_end_x],
                         'f_mask': mask_label,
@@ -59,6 +59,7 @@ class Process():
                     fdb_w, fdb_h = self.fdb[o_id]['f_wh']
                     if f_w*f_h > fdb_w*fdb_h:
                         self.fdb[o_id] = {
+                            'o_wh': (o_w,o_h),
                             'f_xyxy': (f_start_x, f_start_y, f_end_x, f_end_y),
                             'f_arr': im0c[f_start_y:f_end_y,f_start_x:f_end_x],
                             'f_mask': mask_label,
@@ -68,11 +69,21 @@ class Process():
                         }
                     else:
                         self.fdb[o_id]['detectedFrame'] = frame_idx
-                # print(o_id, ':', o_start_x, o_start_y, o_end_x, o_end_y)
-                # print(f'face in object_id: {o_id}')
-                f_shape = self.fdb[o_id]['f_arr'].shape
-                im0[0:f_shape[0],0:f_shape[1]] = self.fdb[o_id]['f_arr']
+                
+                # f_shape = self.fdb[o_id]['f_arr'].shape
+                # im0[0:f_shape[0],0:f_shape[1]] = self.fdb[o_id]['f_arr']
 
+    def get_offset_area(self, x1, x2, y1, y2, offset):
+        start = 0
+        end = 0
+
+        x1-=15; x2+=15; y1-=15; y2+=15
+        if x1 < 0: x1 = 0
+        if x2 > 640: x2 = 640
+        if y1 < 0: y1 = 0
+        if y2 > 640: y2 = 640
+        return x1, x2, y1, y2
+        
     def upload_s3(self, face_img):
         # img = cv2.imread("1.jpg", cv2.IMREAD_COLOR) 
         uuid = get_uuid()
@@ -100,7 +111,21 @@ class Process():
 
     def next(self):
         print(self.fdb.keys())
-                
+
+    def get_temp_and_handwashing():
+        return 36.5, True
+    
+    def get_tracking_object_num(self):
+        max_size_object_id = -1
+        size = 0
+        for key,value in self.fdb.items():
+            if value['detectedFrame'] == self.frame_idx:
+                o_w, o_h = value['o_wh']
+                if o_w*o_h > size:
+                    max_size_object_id = key
+                    size = o_w*o_h 
+        self.tracking_object_num = max_size_object_id 
+        print('tracking:', self.tracking_object_num)       
 
                     
                 

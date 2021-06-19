@@ -49,6 +49,7 @@ def detect():
         # process.get_tracking_object_num()
         # process.s3_face_upload(frame_idx)
         process.next()
+        im0 = process.print_and_speak_message(im0)
 
         # draw face and mask detaction results
         for (box, pred) in zip(pred_locs, pred_face):
@@ -58,7 +59,9 @@ def detect():
             draw_boxes(im0, outputs)
 
         # display image
-        cv2.imshow('frame', im0)
+        cv2.namedWindow('resized window', cv2.WINDOW_NORMAL)
+        cv2.resizeWindow('resized window', 1200, 1000)
+        cv2.imshow('resized window', im0)
         if cv2.waitKey(1) == ord('q'):  # q to quit
             raise StopIteration
         

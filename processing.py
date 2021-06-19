@@ -1,7 +1,11 @@
 import numpy as np
 import cv2
 import boto3
+import win32com.client
+import threading
 from etc import get_uuid
+from PIL import ImageFont, ImageDraw, Image
+
 s3 = boto3.client('s3')
 
 class Process():
@@ -9,12 +13,17 @@ class Process():
     
     '''
     def __init__(self):
+        self.message = ''
+        self.recent_status = -1
         self.status = 0
         self.largest_obj_size = 0
         self.largest_obj_id = 0
         self.detacted_obj_frame = 0
         self.frame_idx = 0
         self.fdb = {}
+        self.speak_flag = True
+        self.speak_status = 0
+        self.deleted_id = []
         
 
     def classify_face_and_body(self, frame_idx, im0, im0c, obj_, face_):
@@ -93,7 +102,8 @@ class Process():
         # img = cv2.imread("1.jpg", cv2.IMREAD_COLOR) 
         uuid = get_uuid()
         data_serial = cv2.imencode('.jpg', face_img)[1].tobytes()
-        s3.put_object(Bucket="facecog-bucket", Key =f'upload/visitor_{uuid}.jpg', Body=data_serial, ACL='public-read')
+        s3.put_object(Bucket="facerecog-bucket", Key =f'upload/visitor_{uuid}.jpg', Body=data_serial, ACL='public-read')
+        print('upload image')
 
     def s3_face_upload(self, frame_idx):
         delete_idx = []
@@ -116,28 +126,79 @@ class Process():
 
     def next(self):
         self.get_tracking_object_num()
-        mask_status = self.get_mask_detect_status()
-        over_face_size = self.is_over_face_size()
-        print('mask', mask_status)
-        print('isoverface', over_face_size)
-        
-        if not mask_status:
-            print('please mask check')
+
+        if not self.speak_flag:
+            return
+        if self.tracking_object_num in self.deleted_id:
+            return 
+        if self.tracking_object_num == -1:
+            self.status = 0
+            self.message = ''
+            return
+        if self.status == 0:
+            self.status = 1
+            self.message = '안녕하세요. 반갑습니다'
             return
 
-        if over_face_size:
-            print('start temp')
-            temp, hand_wasing = self.get_temp_and_handwashing()
+        mask_status = self.get_mask_detect_status()
+        over_face_size = self.is_over_face_size()
+        # print('mask', mask_status)
+        # print('isoverface', over_face_size)
+        
+        if not mask_status:
+            self.status=2
+            self.message = '마스크를 확인해 주시기 바랍니다'
+            return
 
-            print(temp, hand_wasing)
-            if 35.5 <= temp <= 37.5:
-                print('temp is ok')
-                print('please hand washing')
-                print('good bye')
-                return
-        else:
-            print('please come closely')
+        if not over_face_size:
+            self.status=3
+            self.message = '온도측정을 위해 조금 더 \n가까이 와주시기 바랍니다.'
             return 
+
+        self.message = '온도 측정을 시작합니다.'
+        self.status=4
+        temp, hand_wasing = self.get_temp_and_handwashing()
+
+        if 35.5 <= temp <= 37.5:
+            self.status = 5
+            self.message = f'온도 측정 결과:{temp} \n정상 온도입니다.\n입장 해주시기 바랍니다.'
+            self.deleted_id.append(self.tracking_object_num)
+            self.status = 0
+            self.upload_s3(self.fdb[self.tracking_object_num]['f_arr'])
+        else:
+            self.status=5
+            self.message = f'온도 측정 결과:{temp} \n비정상 온도입니다.\n관리자에게 문의해 주시기 바랍니다.'
+            self.deleted_id.append(self.tracking_object_num)
+            self.status = 0
+            self.upload_s3(self.fdb[self.tracking_object_num]['f_arr'])
+    
+    def print_and_speak_message(self, frame):
+        b,g,r,a = 255,255,255,0
+        fontpath = "fonts/NanumGothic.ttf"
+        font = ImageFont.truetype(fontpath, 20)
+        img_pil = Image.fromarray(frame)
+        if self.message:
+            draw = ImageDraw.Draw(img_pil)
+            draw.text((200, 50),  self.message, font=font, fill=(b,g,r,a))
+        
+        if self.status == self.recent_status:
+            return np.array(img_pil)
+
+        if self.speak_flag and self.speak_status != self.status:
+            t = threading.Thread(target=self.speak_message)
+            t.daemon = True
+            t.start()
+
+        self.recent_status = self.status
+
+        return np.array(img_pil)
+
+    def speak_message(self):
+        self.speak_flag = False
+        tts = win32com.client.Dispatch("SAPI.SpVoice")
+        tts.Speak(self.message)
+        self.speak_flag = True
+        self.speak_status = self.status
 
     def get_temp_and_handwashing(self):
         return 36.5, True
@@ -151,7 +212,10 @@ class Process():
                 if o_w*o_h > size:
                     max_size_object_id = key
                     size = o_w*o_h 
-        self.tracking_object_num = max_size_object_id 
+        if not max_size_object_id in self.deleted_id:
+            self.tracking_object_num = max_size_object_id
+        else:
+            self.tracking_object_num = -1
         print('tracking:', self.tracking_object_num)    
 
     def get_mask_detect_status(self):
